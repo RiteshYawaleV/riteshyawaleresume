@@ -1,6 +1,7 @@
 $(document).ready(function () {
 
-    const excelFilePath = '/pr.xlsx';
+    const excelFilePath = 'file:///C:/Users/Ritesh.Yawale/Desktop/USDH%20Details/EXCEL%20UPLOAD%20JOB/pr.xlsx';
+    
     $("#submitbtn").prop('disabled', true);
     $('#jobSkillSelect').chosen({
         width: '100%',
@@ -65,7 +66,55 @@ $(document).ready(function () {
         }).join('');
         $('#excelBody' + (i + 1)).html(bodyHtml);
     }
-    loadExcelData(excelFilePath);
+    
+    $("#fileInput").on("change", function (event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: "array" });
+
+                for (let i = 0; i < 4; i++) {
+                    const sheetName = workbook.SheetNames[i];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                    switch (i) {
+                        case 0:
+                            excel1 = jsonData;
+                            break;
+                        case 1:
+                            excel2 = jsonData;
+                            break;
+                        case 2:
+                            excel3 = jsonData;
+                            break;
+                        case 3:
+                            excel4 = jsonData;
+                            break;
+                        default:
+                            break;
+                    }
+                    populateTable(jsonData, i);
+                    console.log(jsonData);
+                }
+                uniqueLevels = [...new Set(excel2.map(row => row[0]))];
+                uniqueLevels = uniqueLevels.slice(1);
+                const selectDropdown = document.getElementById('jobLevelSelect');
+                uniqueLevels.forEach(level => {
+                    const option = document.createElement('option');
+                    option.value = level;
+                    option.textContent = `${level}`;
+                    selectDropdown.appendChild(option);
+                });
+
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            console.error("No file selected.");
+        }
+    });
 
     $('#jobLevelSelect').on('change', function () {
         $('#jobSkillSelect').empty();
